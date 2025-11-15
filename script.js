@@ -1,95 +1,127 @@
-// Import the functions we need from the Firebase SDKs
-import { initializeApp }from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+// Wait for the DOM to be fully loaded before running scripts
+document.addEventListener("DOMContentLoaded", () => {
 
-// Initialize Firebase using the config object from index.html
-const app = initializeApp(window.firebaseConfig);
-const auth = getAuth(app);
-
-// --- Get Element References (Same as before) ---
-const loginNavBtn = document.getElementById('login-nav-btn');
-const ctaBtn = document.getElementById('cta-btn');
-const backToHomeBtn = document.getElementById('back-to-home');
-
-const landingPage = document.getElementById('landing-page');
-const loginPage = document.getElementById('login-page');
-
-const loginForm = document.getElementById('login-form');
-const loginMessage = document.getElementById('login-message');
-
-// --- Functions to Toggle Pages (Same as before) ---
-
-/**
- * Hides the landing page and shows the login page.
- */
-function showLoginPage() {
-    landingPage.classList.add('hidden');
-    loginPage.classList.remove('hidden');
-}
-
-/**
- * Hides the login page and shows the landing page.
- */
-function showLandingPage() {
-    loginPage.classList.add('hidden');
-    landingPage.classList.remove('hidden');
-    loginMessage.textContent = ''; // Clear any login messages
-}
-
-// --- Event Listeners (Same as before) ---
-loginNavBtn.addEventListener('click', showLoginPage);
-ctaBtn.addEventListener('click', showLoginPage);
-
-backToHomeBtn.addEventListener('click', (event) => {
-    event.preventDefault(); // Prevent the link from navigating
-    showLandingPage();
-});
-
-// --- Handle Login Form Submission (UPDATED) ---
-// We make the function "async" to use "await" for the Firebase call
-loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault(); // Stop the form from submitting normally
-
-    // Get values from the form
-    const email = event.target.email.value;
-    const password = event.target.password.value;
-
-    // Display a loading message
-    loginMessage.textContent = 'Logging in...';
-    loginMessage.style.color = 'blue';
-
-    try {
-        // --- This is the REAL Firebase call ---
-        // It replaces the "setTimeout" simulation
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        
-        // Signed in successfully
-        const user = userCredential.user;
-        loginMessage.textContent = `Success! Welcome back, ${user.email}`;
-        loginMessage.style.color = 'green';
-        
-        // In a real app, you would now redirect to a member dashboard
-        // Example: setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
-
-    } catch (error) {
-        // --- Handle Firebase Errors ---
-        const errorCode = error.code;
-        console.error("Login Error:", errorCode);
-
-        // Show a user-friendly message
-        switch (errorCode) {
-            case 'auth/user-not-found':
-                loginMessage.textContent = 'No account found with this email.';
-                break;
-            case 'auth/wrong-password':
-                loginMessage.textContent = 'Incorrect password. Please try again.';
-                break;
-            case 'auth/invalid-email':
-                loginMessage.textContent = 'Please enter a valid email address.';
-                break;
-            default:
-                loginMessage.textContent = 'Error logging in. Please try again later.';
-        }
-        loginMessage.style.color = 'red';
+    // Check if we are on the login page by seeing if the login form exists
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+    
+    if (loginForm && signupForm) {
+        setupAuthForms();
     }
 });
+
+/**
+ * Sets up all event listeners for the authentication forms (login/signup)
+ */
+function setupAuthForms() {
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+    
+    // Get the links that toggle between the forms
+    const showSignupLink = document.getElementById("show-signup");
+    const showLoginLink = document.getElementById("show-login");
+
+    // Get error message containers
+    const loginError = document.getElementById("login-error");
+    const signupError = document.getElementById("signup-error");
+
+    // --- Toggle Links ---
+    showSignupLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        loginForm.style.display = "none";
+        signupForm.style.display = "block";
+        loginError.style.display = "none"; // Hide errors when toggling
+    });
+
+    showLoginLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        loginForm.style.display = "block";
+        signupForm.style.display = "none";
+        signupError.style.display = "none"; // Hide errors when toggling
+    });
+
+    // --- Form Submission Handlers ---
+
+    // Login Form
+    loginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = document.getElementById("login-email").value;
+        const password = document.getElementById("login-password").value;
+
+        // Reset error
+        loginError.style.display = "none";
+        loginError.textContent = "";
+
+        // !! FIREBASE STUB !!
+        // Check if Firebase is defined. If not, run demo mode.
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.warn("Firebase not configured. Running in demo mode.");
+            // Simulate a successful login for demo purposes
+            alert(`Demo Mode: Logged in with ${email}`);
+            // In a real app, you'd redirect:
+            // window.location.href = "dashboard.html";
+            return;
+        }
+
+        // --- REAL FIREBASE LOGIC (once configured) ---
+        /*
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Signed in
+                console.log("User logged in:", userCredential.user);
+                window.location.href = "dashboard.html"; // Redirect to a dashboard
+            })
+            .catch((error) => {
+                console.error("Login error:", error);
+                loginError.textContent = error.message;
+                loginError.style.display = "block";
+            });
+        */
+    });
+
+    // Signup Form
+    signupForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = document.getElementById("signup-email").value;
+        const password = document.getElementById("signup-password").value;
+        const confirmPassword = document.getElementById("signup-confirm-password").value;
+
+        // Reset error
+        signupError.style.display = "none";
+        signupError.textContent = "";
+
+        // Simple client-side validation
+        if (password !== confirmPassword) {
+            signupError.textContent = "Passwords do not match.";
+            signupError.style.display = "block";
+            return;
+        }
+
+        // !! FIREBASE STUB !!
+        // Check if Firebase is defined. If not, run demo mode.
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.warn("Firebase not configured. Running in demo mode.");
+            // Simulate a successful signup
+            alert(`Demo Mode: Account created for ${email}`);
+            // In a real app, you'd log them in and redirect:
+            // window.location.href = "dashboard.html";
+            return;
+        }
+
+        // --- REAL FIREBASE LOGIC (once configured) ---
+        /*
+        firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Signed in
+                console.log("User created:", userCredential.user);
+                // You might want to save more user info to Firestore here
+                window.location.href = "dashboard.html"; // Redirect to a dashboard
+            })
+            .catch((error) => {
+                console.error("Signup error:", error);
+                signupError.textContent = error.message;
+                signupError.style.display = "block";
+            });
+        */
+    });
+}
